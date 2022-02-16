@@ -1,6 +1,6 @@
-CREATE DATABASE booking;
+CREATE DATABASE bookingsystem;
 
-USE booking;
+USE bookingsystem;
 
 CREATE TABLE room (
     room_id INT not null PRIMARY KEY AUTO_INCREMENT,

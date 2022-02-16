@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>Bookingsystem</title>
+</head>
+<body>
+    
+    <h1>Booking av rom</h1>
+    
+    <select id="romvalg" onchange="VelgRom()">
+        <option disabled selected value>Velg rommet du skal booke</option> 
+        <option value="grupperom 1">Grupperom 1</option>
+        <option value="grupperom 2">Grupperom 2</option>
+        <option value="samtalerom">Samtalerom</option>
+    </select>
+
+        <div class="skjul" id="kalender">
+            <table>
+                <tr>
+                    <h3>Februar</h3>
+                    <h3>2022</h3>
+                </tr>
+                <tr>
+                    <th>Mandag</th>
+                    <th>Tirsdag</th>
+                    <th>Onsdag</th>
+                    <th>Torsdag</th>
+                    <th>Fredag</th>
+                    <th>Lørdag</th>
+                    <th>Søndag</th>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>1</td>
+                    <td>2</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td>5</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>8</td>
+                    <td>9</td>
+                    <td>10</td>
+                    <td>11</td>
+                    <td>12</td>
+                    <td>13</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td>15</td>
+                    <td>16</td>
+                    <td>17</td>
+                    <td>18</td>
+                    <td>19</td>
+                    <td>20</td>
+                </tr>
+                <tr>
+                    <td>21</td>
+                    <td>22</td>
+                    <td>23</td>
+                    <td>24</td>
+                    <td>25</td>
+                    <td>26</td>
+                    <td>27</td>
+                </tr>
+                <tr>
+                    <td>28</td>
+                </tr>
+            </table>
+
+    </div>
+
+    <div class="skjul" id="valg">
+        <label for="dato">Bookingsdato:</label>
+        <input type="date" name="dato" id="dato" min="2022-01-01" max="2022-12-31">
+
+        <label for="fraTid">Fra:</label>
+        <input type="time" name="fraTid" id="fraTid">
+
+        <label for="tilTid">Til:</label>
+        <input type="time" name="tilTid" id="tilTid">
+
+        <button id="bookKnapp" onclick="BookRom()">Book rom</button>
+        <button class="skjul" id="redigerKnapp" onclick="RedigerValg()">Rediger</button>
+
+        <p id="bekreftelse"></p>
+    </div>
+
+    <script src="../js/script.js"></script>
+
+</body>
+</html>
