@@ -7,7 +7,7 @@
     // If post data (data from the form on the site)
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // setting temporary variables
-        $username = $_POST['name'];
+        $username = $_POST['username'];
         $pwd = $_POST['password'];
 
         // finding if the user exists in DB
@@ -19,7 +19,7 @@
 
         // if user exists run login function (from phpRepo), else output error message
         if (!is_null($userquery_res) && password_verify($pwd, $userquery_res['password'])) {
-            login($con, $userquery_res["user_id"], $name);
+            login($userquery_res["user_id"], $username, $userquery_res["name"], $userquery_res["surname"]);
             $msgText = 'Innloggingen fungerte!';
             header('Location: booking.php');
         }else{
@@ -41,6 +41,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+    <header><h1>Login</h1></header>
     <main>
         <p>Har du ikke laget en bruker? <a href="lagBruker.php">Lag bruker</a></p>
 

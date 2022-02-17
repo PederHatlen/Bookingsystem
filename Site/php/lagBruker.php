@@ -56,6 +56,7 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+    <header><h1>Lag bruker</h1></header>
     <main>
         <!-- Page info and explaination -->
         <p>Har du allerede en bruker? <a href="login.php">Logg inn</a></p>
