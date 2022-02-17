@@ -1,6 +1,9 @@
 <?php
     include 'phpRepo.php';
     echo var_dump($_SESSION);
+    if (!is_logedin()){
+        header('Location: login.php');
+    }
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (isset($_POST['room']) && isset($_POST['from']) && isset($_POST['to'])){

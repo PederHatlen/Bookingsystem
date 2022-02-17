@@ -37,6 +37,7 @@
                 $con->close();
 
                 $message = 'Brukeren er registrert og inlogget.';
+                header('Location: booking.php');
             }
         }else{
             $message = 'Det ble ikke sendt med nokk detaljer.';

@@ -19,4 +19,11 @@
         $_SESSION["name"] = $name;
         $_SESSION["surname"] = $surname;
     }
+    function is_logedin(){
+        if (isset($_SESSION["user_id"]) && isset($_SESSION["username"])){
+            return TRUE;
+        } else{
+            return FALSE;
+        }
+    }
 ?>
