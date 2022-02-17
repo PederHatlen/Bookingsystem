@@ -39,12 +39,20 @@
             }   
         }
     }
-    if ($_SERVER["REQUEST_METHOD"] == "GET"){
 
+    $search_from = null;
+    $search_to = null;
+
+    if (isset($_GET["date"])){
+        $search_from = strtotime($_GET["date"]);
+        $search_to = strtotime('+1 day', $search_from);
+        echo date("Y-m-d H:i:s", $search_from);
+        echo date("Y-m-d H:i:s", $search_to);
+
+    }else{  
+        $search_from = strtotime('today midnight');
+        $search_to = strtotime('tomorrow midnight');
     }
-
-    $search_from = strtotime('today midnight');
-    $search_to = strtotime('tomorrow midnight');
 
     $searchDate_from = date('Y-m-d H:i:s', $search_from);
     $searchDate_to = date('Y-m-d H:i:s', $search_to);
@@ -62,7 +70,9 @@
     $stmt->execute();
     $bookings = $stmt->get_result();
 
-    $bookingMargin = 30;
+    $bookingMarginX = 0;
+    $bookingMarginY = 30;
+
 ?>
 
 <!DOCTYPE html>
@@ -75,7 +85,9 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-    <header><h1>Booking</h1></header>
+    <header>
+        <h1>Booking</h1>
+    </header>
     <main>
         <form name="newBooking" id="newBooking" method="post"">
             <input type="hidden" name="form" value="make">
@@ -100,28 +112,14 @@
         </form>
         <?php echo "<p>".$message."</p>";?>
         <br>
-        <svg width="100%" height=<?php echo '"'.((mysqli_num_rows($rooms)*100)+$bookingMargin+1).'"'?> xmlns="http://www.w3.org/2000/svg">
+        <svg width="100%" height=<?php echo '"'.((mysqli_num_rows($rooms)*100)+$bookingMarginY+1).'"'?> xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <style>.small { font: italic 10px sans-serif; fill: white;}</style>
-                <pattern y=<?php echo '"'.$bookingMargin.'"'?> x=<?php echo '"'.$bookingMargin.'"'?> id="grid" width="calc((100% - 30px)/12 - 1px/12)" height="100" patternUnits="userSpaceOnUse">
+                <style>.small { font: 10px "Arial Black", "Arial", sans-serif; fill: white; filter: drop-shadow(0 0 0.5rem #000);}</style>
+                <pattern x=<?php echo '"'.$bookingMarginX.'"'?> y=<?php echo '"'.$bookingMarginY.'"'?> id="grid" width=<?php echo '"calc((100% - '.$bookingMarginX.'px)/12 - 1px/12)"'?> height="100" patternUnits="userSpaceOnUse">
                     <rect width="100%" height="100%" fill="none" stroke="gray" stroke-width="1"/>
                 </pattern>
 
             </defs>
-            <rect width="100%" x=<?php echo '"'.$bookingMargin.'"'?> y=<?php echo '"'.$bookingMargin.'"'?> height=<?php echo '"'.((100 * mysqli_num_rows($rooms)) + 31).'"';?> fill="url(#grid)" />
-
-            <g>
-                <?php for ($i=0; $i < 12; $i++) {echo '<text x="10" y="20" class="small">'.str_pad($i*2, 2, "0", STR_PAD_LEFT).':00</text>';}?>
-            </g>
-            <g>
-                <?php 
-                var_dump($roomsArr);
-                for ($i=0; $i < count($roomsArr); $i++) { 
-                    echo '<text x="15" y="'.((100*$i)+$bookingMargin).'" class="small" writing-mode="vertical-rl">'.$roomsArr[$i]["room_name"].'</text>';
-                }?>
-            </g>
-
-
             <?php
                 $searchOffset = $search_to-$search_from;
                 while ($row = $bookings->fetch_assoc()) {
@@ -130,12 +128,33 @@
 
                     $width = (($to - $from)/($searchOffset))*100;
                     $x = (($from-$search_from)/($searchOffset))*100;
-                    $y = (intval($row["room_id"])*100) - 70;
-                    echo '<rect id="'.$row["booking_id"].'" x="calc('.$x.'% + 30px)" y="'.$y.'" width="calc('.$x.'% + 30px)" height="100" fill="'.rand_color().'" onclick="bookingInfo(this)"/>';
+                    $y = (intval($row["room_id"])*100) - (100 - $bookingMarginY);
+
+                    echo $width." | ".$x." | ".$y;
+
+                    echo '<rect id="'.$row["booking_id"].'" x="'.$x.'%" y="'.$y.'" width="'.$width.'%" height="100" fill="'.rand_color().'" onclick="bookingInfo(this)"/>';
                 }
             ?>
 
+
+            <rect width="100%" x=<?php echo '"'.$bookingMarginX.'"'?> y=<?php echo '"'.$bookingMarginY.'"'?> height=<?php echo '"'.((100 * mysqli_num_rows($rooms)) + 31).'"';?> fill="url(#grid)" />
+
+            <g>
+                <?php 
+                    for ($i=0; $i < 12; $i++) {echo '<text x="calc((100%/12)*'.($i+0.1).')" y="20" class="small">'.str_pad($i*2, 2, "0", STR_PAD_LEFT).':00</text>';}
+                ?>
+            </g>
+            <g>
+                <?php 
+                    for ($i=0; $i < count($roomsArr); $i++) {echo '<text x="15" y="'.((100*$i)+20+$bookingMarginY).'" class="small" writing-mode="vertical-rl">'.$roomsArr[$i]["room_name"].'</text>';}
+                ?>
+            </g>
+
         </svg>
+        <form action="" method="get">
+            <input type="date" name="date" id="date">
+            <input type="submit" value="Se en annen dag">
+        </form>
         <div id="bookingInfo">
             <?php
                 while ($row = $bookings->fetch_assoc()) {
