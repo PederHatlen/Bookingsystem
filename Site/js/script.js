@@ -21,7 +21,7 @@ function BookRom() {
 
     var popup;
 
-    if (dato.value != 0 || (fraTid.value != 0 || tilTid.value != 0)) {
+    if (dato.value != 0 && (fraTid.value != 0 && tilTid.value != 0)) {
         popup = window.confirm("Vil du booke " + romValg.value + " denne dagen? Trykk 'OK' for å bekrefte.");
     } else {
         bekreftelse.innerHTML = "Oisann! Det ser ut som at du har glemt å sette inn dato og/eller tidspunkt for booking av rommet. Vennligst sett inn manglende informasjon og prøv på nytt. Takk!"

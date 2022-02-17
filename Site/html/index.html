@@ -38,7 +38,7 @@
                     <td>1</td>
                     <td>2</td>
                     <td>3</td>
-                    <td>4</td>
+                    <td class="opptatt">4</td>
                     <td>5</td>
                     <td>6</td>
                 </tr>
@@ -76,6 +76,8 @@
 
     </div>
 
+    <p id="bekreftelse"></p>
+
     <div class="skjul" id="valg">
         <label for="dato">Bookingsdato:</label>
         <input type="date" name="dato" id="dato" min="2022-01-01" max="2022-12-31">
@@ -89,7 +91,6 @@
         <button id="bookKnapp" onclick="BookRom()">Book rom</button>
         <button class="skjul" id="redigerKnapp" onclick="RedigerValg()">Rediger</button>
 
-        <p id="bekreftelse"></p>
     </div>
 
     <script src="../js/script.js"></script>
