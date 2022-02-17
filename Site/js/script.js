@@ -44,7 +44,7 @@ function BookRom() {
         fraTid.disabled = true;
         tilTid.disabled = true;
 
-        bekreftelse.innerHTML = "Du booket " + romValg.value + " for den " + dato.value + " fra kl. " + fraTid.value + " til kl. " + tilTid.value;
+        bekreftelse.innerHTML = "Du booket " + romValg.value + " for den " + dato.value + " fra kl. " + fraTid.value + " til kl. " + tilTid.value + ".";
     } else {
 
     }
