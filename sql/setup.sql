@@ -24,7 +24,7 @@ CREATE TABLE booking (
     user_id INT not null,
     time_from DATETIME not Null,
     time_to DATETIME not Null,
-    created_at Datetime not Null,
+    created_at Datetime DEFAULT current_timestamp,
     FOREIGN KEY (room_id) REFERENCES room(room_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
