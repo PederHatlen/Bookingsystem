@@ -98,7 +98,7 @@ button:hover {
 
 
 /* PEDER SIN SEKSJON */
-html, body{
+html, body, #editContainer{
     margin: 0;
     padding: 0;
     width: 100%;
@@ -128,12 +128,38 @@ body{
     margin-left: auto;
     margin-right: auto;
 }
-@media (orientation: portrait) {
-    body{width: 100%;}
+
+.bookingInfo{
+    display: none;
 }
+#editContainer{
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #00000050;
+    display: none;
+}
+#editContainer div{
+    margin: 0;
+    padding: 20px;
+    width: fit-content;
+    background-color: #000;
+}
+.closeBtn{
+    color: Red;
+}
+
 #row_explainations{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+@media (orientation: portrait) {
+    body{width: 100%;}
 }
 /*********************/
