@@ -7,6 +7,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+header {
+    color: aqua;
+}
+
 button {
     border: gray;
     margin-top: 5px;
