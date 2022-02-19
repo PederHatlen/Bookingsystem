@@ -32,8 +32,8 @@
             $from = strtotime($from);
             $to = strtotime($to);
 
-            $fromFormat = date('Y-m-d H:i:s', strtotime($from));
-            $toFormat = date('Y-m-d H:i:s', strtotime($to));
+            $fromFormat = date('Y-m-d H:i:s', $from);
+            $toFormat = date('Y-m-d H:i:s', $to);
 
             if (($from < $to) && is_logedin($con)){
                 $datediff = ($to - $from) / (60 * 60 * 24);
