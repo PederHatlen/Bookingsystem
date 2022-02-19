@@ -13,62 +13,53 @@
             $room = null;
             $from = 0;
             $to = 0;
-
-            $fromFormat;
-            $toFormat;
+            
             if ($_POST["form"] == 'make') {
-                $from = strtotime($_POST["from"]);
-                $to = strtotime($_POST["to"]);
+                $room = $_POST["room"];
+                $from = $_POST["from"];
+                $to = $_POST["to"];
             }else{
                 $stmt = $con->prepare('SELECT room_id, time_from, time_to FROM booking WHERE booking_id = ?');
                 $stmt->bind_param('i', $_POST["booking_id"]);
                 $stmt->execute();
                 $result = $stmt->get_result()->fetch_row();
 
-                //echo is_null($_POST['room'])." | ".is_null($_POST['from'])." | ".is_null($_POST['to']);
-
                 if (trim($_POST['room']) == ""){$room = $result[0];}else{$room = $_POST['room'];}
                 if (trim($_POST['from']) == ""){$from = $result[1];}else{$from = $_POST['from'];}
                 if (trim($_POST['to']) == ""){$to = $result[2];}else{$to = $_POST['to'];}
-
-                $from = strtotime($from);
-                $to = strtotime($to);
             }
-            $fromFormat = date('Y-m-d H:i:s', $from);
-            $toFormat = date('Y-m-d H:i:s', $to);
+
+            $from = strtotime($from);
+            $to = strtotime($to);
+
+            $fromFormat = date('Y-m-d H:i:s', strtotime($from));
+            $toFormat = date('Y-m-d H:i:s', strtotime($to));
 
             if (($from < $to) && is_logedin($con)){
                 $datediff = ($to - $from) / (60 * 60 * 24);
 
-                $bookingId = null;
+                $bookingId = 0;
                 if (isset($_POST["booking_id"])){
                     $bookingId = $_POST["booking_id"];
                 }
 
-                $stmt = $con->prepare('SELECT * FROM booking WHERE room_id = ? AND ((? BETWEEN time_from AND time_to OR ? BETWEEN time_from AND time_to) or (time_from BETWEEN ? AND ? OR time_to BETWEEN ? AND ?))');
-                $stmt->bind_param('issssss', $_POST['room'], $fromFormat, $toFormat, $fromFormat, $toFormat, $fromFormat, $toFormat);
+                $stmt = $con->prepare('SELECT * FROM booking WHERE room_id = ? AND booking_id != ? AND ((? BETWEEN time_from AND time_to) or (time_from BETWEEN ? AND ?) or (time_from = ?))');
+                $stmt->bind_param('iissss', $room, $bookingId, $fromFormat, $fromFormat, $toFormat, $fromFormat);
                 $stmt->execute();
-                $conflictions = $stmt->get_result()->fetch_all($mode = MYSQLI_BOTH);
 
-                $conflictionsNum = 0;
-                $isEdited = FALSE;
-                for ($i=0; $i < count($conflictions); $i++) { 
-                    if ($conflictions[$i]["booking_id"] == $bookingId){
-                        $isEdited = TRUE;
-                    }
-                }
+                $conflictions = $stmt->get_result()->num_rows;
 
-                if ($conflictionsNum == 0 || ($conflictionsNum == 1 && $isEdited)){
+                if ($conflictions == 0){
                     if ($datediff < 1){
                         switch ($_POST["form"]) {
                             case 'make':
                                 $stmt = $con->prepare('INSERT INTO booking (room_id, user_id, time_from, time_to) VALUES(?,?,?,?)');
-                                $stmt->bind_param('iiss', $_POST["room"], $_SESSION["user_id"], $fromFormat, $toFormat);
+                                $stmt->bind_param('iiss', $room, $_SESSION["user_id"], $fromFormat, $toFormat);
                                 $stmt->execute();
                                 $message = "Bookingen ble laget.";
                                 break;
                             case 'edit':
-                                echo($room." | ".$fromFormat." | ".$toFormat." | ".$bookingId);
+                                // echo($room." | ".$fromFormat." | ".$toFormat." | ".$bookingId);
                                 $stmt = $con->prepare('UPDATE booking SET room_id = ?, time_from = ?, time_to = ? WHERE booking_id = ?');
                                 $stmt->bind_param('issi', $room, $fromFormat, $toFormat, $bookingId);
                                 $stmt->execute();
