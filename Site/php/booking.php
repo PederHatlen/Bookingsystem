@@ -1,35 +1,54 @@
 <?php
     include 'phpRepo.php';
+    $con = connect();
 
-    if (!is_logedin()){
+    if (!is_logedin($con)){
         header('Location: login.php');
     }
 
     $message = "";
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        echo var_dump($_POST);
-        if (isset($_POST['room']) && isset($_POST['from']) && isset($_POST['to'])){
-            $from = strtotime($_POST["from"]);
-            $fromFormat = date('Y-m-d H:i:s', $from);
+        if ((isset($_POST['room']) && isset($_POST['from']) && isset($_POST['to'])) || $_POST["form"] == 'edit'){
+            $room = null;
+            $from = 0;
+            $to = 0;
 
-            $to = strtotime($_POST["to"]);
+            $fromFormat;
+            $toFormat;
+            if ($_POST["form"] == 'make') {
+                $from = strtotime($_POST["from"]);
+                $to = strtotime($_POST["to"]);
+            }else{
+                $stmt = $con->prepare('SELECT room_id, time_from, time_to FROM booking WHERE booking_id = ?');
+                $stmt->bind_param('i', $_POST["booking_id"]);
+                $stmt->execute();
+                $result = $stmt->get_result()->fetch_row();
+
+                //echo is_null($_POST['room'])." | ".is_null($_POST['from'])." | ".is_null($_POST['to']);
+
+                if (trim($_POST['room']) == ""){$room = $result[0];}else{$room = $_POST['room'];}
+                if (trim($_POST['from']) == ""){$from = $result[1];}else{$from = $_POST['from'];}
+                if (trim($_POST['to']) == ""){$to = $result[2];}else{$to = $_POST['to'];}
+
+                $from = strtotime($from);
+                $to = strtotime($to);
+            }
+            $fromFormat = date('Y-m-d H:i:s', $from);
             $toFormat = date('Y-m-d H:i:s', $to);
-            // echo $_POST["room"]." | ".$_SESSION["user_id"]." | ".$to." | ".$from;
-            if ($from < $to){
+
+            if (($from < $to) && is_logedin($con)){
                 $datediff = ($to - $from) / (60 * 60 * 24);
 
                 $bookingId = null;
                 if (isset($_POST["booking_id"])){
                     $bookingId = $_POST["booking_id"];
-                    echo($bookingId);
                 }
-                
-                $con = connect();
+
                 $stmt = $con->prepare('SELECT * FROM booking WHERE room_id = ? AND ((? BETWEEN time_from AND time_to OR ? BETWEEN time_from AND time_to) or (time_from BETWEEN ? AND ? OR time_to BETWEEN ? AND ?))');
                 $stmt->bind_param('issssss', $_POST['room'], $fromFormat, $toFormat, $fromFormat, $toFormat, $fromFormat, $toFormat);
                 $stmt->execute();
-                $conflictions = $stmt->get_result()->fetch_all($mode = MYSQLI_BOTH);;
+                $conflictions = $stmt->get_result()->fetch_all($mode = MYSQLI_BOTH);
 
                 $conflictionsNum = 0;
                 $isEdited = FALSE;
@@ -49,9 +68,9 @@
                                 $message = "Bookingen ble laget.";
                                 break;
                             case 'edit':
-                                echo($_POST["room"]." | ".$fromFormat." | ".$toFormat." | ".$bookingId);
+                                echo($room." | ".$fromFormat." | ".$toFormat." | ".$bookingId);
                                 $stmt = $con->prepare('UPDATE booking SET room_id = ?, time_from = ?, time_to = ? WHERE booking_id = ?');
-                                $stmt->bind_param('issi', $_POST["room"], $fromFormat, $toFormat, $bookingId);
+                                $stmt->bind_param('issi', $room, $fromFormat, $toFormat, $bookingId);
                                 $stmt->execute();
                                 $message = "Bookingen ble redigert.";
                                 break;
@@ -84,8 +103,6 @@
 
     $searchDate_from = date('Y-m-d H:i:s', $search_from);
     $searchDate_to = date('Y-m-d H:i:s', $search_to);
-
-    $con = connect();
 
     $stmt = $con->prepare('SELECT * FROM room');
     $stmt->execute();
@@ -189,7 +206,7 @@
         <div id="bookingInfo">
             <?php
                 for ($i=0; $i < count($bookingsArr); $i++) {
-                    echo '<div class="bookingInfo" id="'.$bookingsArr[$i]["booking_id"].'Info"><p>'.
+                    echo '<div class="bookingInfo" id="'.$bookingsArr[$i]["booking_id"].'Info" ><p>'.
                     'Booket fra '.
                     date("H:i:s" ,strtotime($bookingsArr[$i]["time_from"])).
                     ', og til '.
@@ -198,7 +215,7 @@
                     ($bookingsArr[$i]["name"]." ".$bookingsArr[$i]["surname"]." (@".$bookingsArr[$i]["username"].")").
                     '</p>';
                     if ($bookingsArr[$i]["username"] == $_SESSION["username"]){
-                        echo '<button class="editBtn" id="editBtn'.$bookingsArr[$i]["booking_id"].'" value="'.$bookingsArr[$i]["booking_id"].'">Rediger</button>';
+                        echo '<button class="editBtn" id="editBtn'.$bookingsArr[$i]["booking_id"].'" data-booking="'.$bookingsArr[$i]["booking_id"].'" data-room="'.$bookingsArr[$i]["room_id"].'">Rediger</button>';
                     }
                     echo "</div>";
                 }
@@ -213,7 +230,7 @@
                     <label for="roomSelect">Rom:</label>
                     <select name="roomSelect" id="editRoomSelect" onchange="selectChange()">
                         <?php
-                            for ($i=0; $i < count($roomsArr); $i++) { 
+                            for ($i=0; $i < count($roomsArr); $i++) {
                                 echo '<option value="'.$roomsArr[$i]["room_id"].'">'.$roomsArr[$i]["room_name"].'</option>';
                             }
                         ?>
@@ -232,7 +249,7 @@
         let roomSelectEL = document.getElementById("roomSelect");
         let roomValueEL = document.getElementById("roomValue");
         let editRoomSelectEL = document.getElementById("editRoomSelect");
-        let editRoomValueEL = document.getElementById("editBookingId");
+        let editRoomValueEL = document.getElementById("editRoomValue");
 
         let bookingsElArr = document.getElementsByClassName("booking");
         let bookingsInfoElArr = document.getElementsByClassName("bookingInfo");
@@ -241,6 +258,8 @@
         let editBtnElArr = document.getElementsByClassName("bookingInfo");
         let editBookingIdEl = document.getElementById("editBookingId");
         let closeEditEl = document.getElementById("closeEdit");
+
+        let editFormEl = document.getElementById("edit");
 
         for (let i = 0; i < bookingsElArr.length; i++) {
             bookingsElArr[i].onclick = function (e){
@@ -255,12 +274,17 @@
         }
         for (let i = 0; i < editBtnElArr.length; i++) {
             editBtnElArr[i].onclick = function (e){
-                console.log("Edit" + e.target.value);
-                editBookingIdEl.value = e.target.value;
+                editBookingIdEl.value = parseInt(e.target.getAttribute("data-booking"));
+                editRoomSelectEL.value = parseInt(e.target.getAttribute("data-room"));
                 editContainerEl.style.display = "flex";
+                console.log(e.target.getAttribute("data-booking"));
+                console.log("Edit: " + editBookingIdEl.value  + ", " + editRoomSelectEL.value);
             }
         }
-
+        editFormEl.onsubmit = function (e){
+            selectChange()
+            // e.preventDefault();
+        }
         function closeEdit(){
             editContainerEl.style.display = "none";
             return false;
@@ -275,3 +299,4 @@
     </script>
 </body>
 </html>
+<?php $con->close();?>
