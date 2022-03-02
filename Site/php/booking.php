@@ -1,19 +1,26 @@
 <?php
+    // Setting that phpRepo is being imported and importing it
+    define("IS_INCLUDED", TRUE);
     include 'phpRepo.php';
     $con = connect();
 
+    // User is logged in, not? Redirect to login
     if (!is_logedin($con)){
         header('Location: login.php');
     }
 
+    // Declaring output message (Handy for debugging/info)
     $message = "";
 
+    // The magic is in the post
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // checking if all data was sent or if it is a edit request
         if ((isset($_POST['room']) && isset($_POST['from']) && isset($_POST['to'])) || $_POST["form"] == 'edit'){
             $room = null;
             $from = 0;
             $to = 0;
             
+            // If the request is to make a booking the data will be collected, else if it edit, missing data will be infered from existing
             if ($_POST["form"] == 'make') {
                 $room = $_POST["room"];
                 $from = $_POST["from"];
@@ -29,37 +36,45 @@
                 if (trim($_POST['to']) == ""){$to = $result[2];}else{$to = $_POST['to'];}
             }
 
+            // Creating PHP-date from html text-date
             $from = strtotime($from);
             $to = strtotime($to);
 
+            // Format PHP-date for mysql
             $fromFormat = date('Y-m-d H:i:s', $from);
             $toFormat = date('Y-m-d H:i:s', $to);
 
-            if (($from < $to) && is_logedin($con)){
+            // Basic check if the time from is before time to. Handy for not creating black holes.
+            // System is not grate at handeling timedifferences of a day or more: it's a feature
+            if ($from < $to){
                 $datediff = ($to - $from) / (60 * 60 * 24);
 
+                // Settingbooking ID to 0 if not set in post data (edit sends id)
                 $bookingId = 0;
                 if (isset($_POST["booking_id"])){
                     $bookingId = $_POST["booking_id"];
                 }
-
+                // I used more time debugging this than i care to admit
                 $stmt = $con->prepare('SELECT * FROM booking WHERE room_id = ? AND booking_id != ? AND ((? BETWEEN time_from AND time_to) or (time_from BETWEEN ? AND ?) or (time_from = ?))');
                 $stmt->bind_param('iissss', $room, $bookingId, $fromFormat, $fromFormat, $toFormat, $fromFormat);
                 $stmt->execute();
 
                 $conflictions = $stmt->get_result()->num_rows;
 
+                // If no conflicts, find what request was sent, and sort (all previous code would be the same on both, so put this as long back i could)
                 if ($conflictions == 0){
                     if ($datediff < 1){
                         switch ($_POST["form"]) {
                             case 'make':
-                                $stmt = $con->prepare('INSERT INTO booking (room_id, user_id, time_from, time_to) VALUES(?,?,?,?)');
-                                $stmt->bind_param('iiss', $room, $_SESSION["user_id"], $fromFormat, $toFormat);
+                                $color = rand_color();
+                                // Basic SQL-Proof statement, with bind_param (Serriously love this (Battletested AF BTW))
+                                $stmt = $con->prepare('INSERT INTO booking (room_id, user_id, color, time_from, time_to) VALUES(?,?,?,?,?)');
+                                $stmt->bind_param('iisss', $room, $_SESSION["user_id"], $color, $fromFormat, $toFormat); // The funky letters are for type specification
                                 $stmt->execute();
                                 $message = "Bookingen ble laget.";
                                 break;
                             case 'edit':
-                                // echo($room." | ".$fromFormat." | ".$toFormat." | ".$bookingId);
+                                // You get the point
                                 $stmt = $con->prepare('UPDATE booking SET room_id = ?, time_from = ?, time_to = ? WHERE booking_id = ?');
                                 $stmt->bind_param('issi', $room, $fromFormat, $toFormat, $bookingId);
                                 $stmt->execute();
@@ -67,7 +82,7 @@
                                 break;
                         }
                         
-                        unset($_POST);
+                        // So sorry, this down here is just what happens when you need different messages
                     }else{
                         $message = "Det er en for lang periode.";
                     }     
@@ -77,12 +92,16 @@
             }else{
                 $message = "Fra er etter til.";
             }
+        }else{
+            $message = "Ikke nok felter ble sendt med.";
         }
     }
 
+    // Devlaring timeperiod to search inn (Default = current date -> tomorrow date)
     $search_from = null;
     $search_to = null;
 
+    // If getdata date is sendt find that and add a day with strtotime (<- favourite PHP function <3), else get current date and tomorrow
     if (isset($_GET["date"])){
         $search_from = strtotime($_GET["date"]);
         $search_to = strtotime('+1 day', $search_from);
@@ -92,17 +111,20 @@
         $search_to = strtotime('tomorrow midnight');
     }
 
+    // Formating as mysql readable
     $searchDate_from = date('Y-m-d H:i:s', $search_from);
     $searchDate_to = date('Y-m-d H:i:s', $search_to);
 
+    // Get all the rooms available for booking, and put them in ann array for safekeeping
     $stmt = $con->prepare('SELECT * FROM room');
     $stmt->execute();
     $rooms = $stmt->get_result();
 
     $roomsArr = $rooms->fetch_all($mode = MYSQLI_BOTH);
 
-    $stmt = $con->prepare('SELECT * FROM booking left join users ON booking.user_id = users.user_id WHERE time_from >= ? or time_to < ?');
-    $stmt->bind_param('ss', $searchDate_from, $searchDate_to); // 's' specifies the variable type => 'string'
+    // Get all bookings in the current range
+    $stmt = $con->prepare('SELECT * FROM booking left join users using(user_id) WHERE (time_from BETWEEN ? AND ?) OR (time_to BETWEEN ? AND ?)');
+    $stmt->bind_param('ssss', $searchDate_from, $searchDate_to, $searchDate_from, $searchDate_to); // 's' specifies the variable type => 'string'       (<- I didn't write this btw -Peder)
     $stmt->execute();
     $bookings = $stmt->get_result();
 
@@ -127,27 +149,32 @@
         <h1>Booking</h1>
     </header>
     <main>
-        <form name="newBooking" id="newBooking" method="post">
-            <input type="hidden" name="form" value="make">
-            <label for="roomSelect">Jeg vil booke:</label>
-            <select name="roomSelect" id="roomSelect" onchange="selectChange()">
-                <?php
-                    for ($i=0; $i < count($roomsArr); $i++) { 
-                        echo '<option value="'.$roomsArr[$i]["room_id"].'">'.$roomsArr[$i]["room_name"].'</option>';
-                    }
-                ?>
-            </select>
-            <input type="hidden" name="room" id="roomValue" value="1">
+        <button id="newBookingBtn" onclick="newBookingClick();">Ny booking</button>
+        <div id="newBookingContainer" class="floatingForm">
+            <div class="floatingFormContent">
+                <h2>Ny booking <a href="#" class="closeBtn" onclick="newBookingClick();">X</a></h2>
+                <form name="newBooking" id="newBooking" method="post">
+                    <input type="hidden" name="form" value="make">
+                    <label for="roomSelect">Jeg vil booke:</label><br>
+                    <select name="roomSelect" id="roomSelect" onchange="selectChange()">
+                        <?php
+                            for ($i=0; $i < count($roomsArr); $i++) { 
+                                echo '<option value="'.$roomsArr[$i]["room_id"].'">'.$roomsArr[$i]["room_name"].'</option>';
+                            }
+                        ?>
+                    </select><br>
+                    <input type="hidden" name="room" id="roomValue" value="1">
+                    <label for="from">Jeg vil booke fra:</label><br>
+                    <input type="datetime-local" name="from" id="from"><br>
 
-            <div class="formTime">
-                <label for="from">Jeg vil booke fra:</label>
-                <input type="datetime-local" name="from" id="from">
-            </div class="formTime">
-            <div>
-            <label for="to">Jeg vil booke til:</label><input type="datetime-local" name="to" id="to">
+                    <label for="to">Jeg vil booke til:</label><br>
+                    <input type="datetime-local" name="to" id="to"><br>
+                    <div>
+                        <input type="submit" value="Send bookingen">
+                    </div>
+                </form>
             </div>
-            <input type="submit" value="Send bookingen">
-        </form>
+        </div>
         <?php echo "<p>".$message."</p>";?>
         <svg width="100%" height=<?php echo '"'.((mysqli_num_rows($rooms)*100)+$bookingMarginY+1).'"'?> xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -172,7 +199,7 @@
 
                     // echo $width." | ".$x." | ".$y;
 
-                    echo '<rect id="'.$bookingsArr[$i]["booking_id"].'" class="booking" x="'.$x.'%" y="'.$y.'" width="'.$width.'%" height="100" fill="'.rand_color().'"/>';
+                    echo '<rect id="'.$bookingsArr[$i]["booking_id"].'" class="booking" x="'.$x.'%" y="'.$y.'" width="'.$width.'%" height="100" fill="'.$bookingsArr[$i]["color"].'"/>';
                 }
             ?>
 
@@ -212,26 +239,30 @@
                 }
             ?>
         </div>
-        <div id="editContainer">
-            <div>
+        <div id="editContainer" class="floatingForm">
+            <div class="floatingFormContent">
                 <h2>Rediger booking <a href="#" class="closeBtn" id="closeEdit" onclick="closeEdit()">X</a></h2>
                 <form action="" method="post" name="edit" id="edit">
                     <input type="hidden" name="form" value="edit">
                     <input type="hidden" name="booking_id" value="" id="editBookingId">
-                    <label for="roomSelect">Rom:</label>
+
+                    <label for="roomSelect">Rom:</label><br>
                     <select name="roomSelect" id="editRoomSelect" onchange="selectChange()">
                         <?php
                             for ($i=0; $i < count($roomsArr); $i++) {
                                 echo '<option value="'.$roomsArr[$i]["room_id"].'">'.$roomsArr[$i]["room_name"].'</option>';
                             }
                         ?>
-                    </select>
-                    <input type="hidden" name="room" id="editRoomValue" value="1">
-                    <label for="from">Fra:</label>
-                    <input type="datetime-local" name="from" id="editFrom">
-                    <label for="to">Til:</label>
-                    <input type="datetime-local" name="to" id="editTo">
-                    <input type="submit" value="Send endring">
+                    </select><input type="hidden" name="room" id="editRoomValue" value="1"><br>
+
+                    <label for="from">Fra:</label><br>
+                    <input type="datetime-local" name="from" id="editFrom"><br>
+
+                    <label for="to">Til:</label><br>
+                    <input type="datetime-local" name="to" id="editTo"><br>
+                    <div>
+                        <input type="submit" value="Send endring">
+                    </div>
                 </form>
             </div>
         </div>
@@ -248,7 +279,8 @@
         let editContainerEl = document.getElementById("editContainer");
         let editBtnElArr = document.getElementsByClassName("bookingInfo");
         let editBookingIdEl = document.getElementById("editBookingId");
-        let closeEditEl = document.getElementById("closeEdit");
+
+        let newBookingContainerEl = document.getElementById("newBookingContainer");
 
         let editFormEl = document.getElementById("edit");
 
@@ -268,17 +300,16 @@
                 editBookingIdEl.value = parseInt(e.target.getAttribute("data-booking"));
                 editRoomSelectEL.value = parseInt(e.target.getAttribute("data-room"));
                 editContainerEl.style.display = "flex";
-                console.log(e.target.getAttribute("data-booking"));
                 console.log("Edit: " + editBookingIdEl.value  + ", " + editRoomSelectEL.value);
             }
         }
-        editFormEl.onsubmit = function (e){
-            selectChange()
-            // e.preventDefault();
-        }
         function closeEdit(){
-            editContainerEl.style.display = "none";
+            editContainerEl.style.display = "";
             return false;
+        }
+
+        function newBookingClick(){
+            newBookingContainerEl.style.display = (newBookingContainerEl.style.display == "flex"? "":"flex") ;
         }
 
         function selectChange(){
@@ -286,7 +317,18 @@
             editRoomValueEL.value = editRoomSelectEL.value;
             console.log("Changed: " + roomValueEL.value + ", " + editRoomValueEL.value);
         }
+        editFormEl.onsubmit = selectChange;
         selectChange();
+
+        window.onclick = function(e){
+            console.log(e.target);
+            if (e.target.nodeName == "MAIN" || e.target.nodeName == "HTML" || e.target.nodeName == "BODY"){
+                for (let i = 0; i < bookingsElArr.length; i++) {
+                    bookingsElArr[i].style.stroke = "";
+                    bookingsInfoElArr[i].style.display = "none";
+                }
+            }
+        }
     </script>
 </body>
 </html>

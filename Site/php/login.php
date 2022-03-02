@@ -1,7 +1,11 @@
 <?php
+    ////////////////////////////
+    /// Hentet fra BinærChat ///
+    ////////////////////////////
+
     // Main PHP bulk, it is before the document because redirecting does not work otherwise
+    define("IS_INCLUDED", TRUE);
     include 'phpRepo.php';
-    $con = connect();
     $msgText = '';
 
     // If post data (data from the form on the site)
@@ -9,6 +13,8 @@
         // setting temporary variables
         $username = $_POST['username'];
         $pwd = $_POST['password'];
+        
+        $con = connect();
 
         // finding if the user exists in DB
         $stmt = $con->prepare('SELECT * FROM users WHERE username = ?');

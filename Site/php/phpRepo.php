@@ -1,25 +1,34 @@
 <?php
     session_start();
 
+    // Easter egg
+    if (!defined("IS_INCLUDED")){
+        header("location: https://youtu.be/dQw4w9WgXcQ");
+    }
+
     function connect(){
+        // Connectiondetails, example for this documents can be found in database_example.php, realfile is gitignore
         include 'database.php';
+
         // Create connection
         $con = mysqli_connect($host, $username, $password, $db);
         // Check connection
         if (!$con) {die("Connection failed: " . mysqli_connect_error());}
     
-        //Angi UTF-8 som tegnsett
+        // UTF-8 as charracter encoding for transactions
         $con->set_charset("utf8");
     
         return $con;
     }
     function login($user_id, $username, $name, $surname){
+        //Login is done with setting session variables, better to let php handle it
         $_SESSION["user_id"] = $user_id;
         $_SESSION["username"] = $username;
         $_SESSION["name"] = $name;
         $_SESSION["surname"] = $surname;
     }
     function logoff(){
+        //unsetting everything
         unset($_SESSION);
     }
     function is_logedin($con){

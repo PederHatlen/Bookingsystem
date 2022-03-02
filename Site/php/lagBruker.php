@@ -1,5 +1,10 @@
 <?php
+    ////////////////////////////
+    /// Hentet fra BinærChat ///
+    ////////////////////////////
+
     // Main PHP bulk, it is before the document because redirecting does not work otherwise
+    define("IS_INCLUDED", TRUE);
     include 'phpRepo.php';
     $message = "";
 
@@ -61,7 +66,7 @@
         <!-- Page info and explaination -->
         <p>Har du allerede en bruker? <a href="login.php">Logg inn</a></p>
 
-        <!-- Form for inputting userdate (u.name & pwd), password has too be typed twice, done with JS -->
+        <!-- Form for inputting userdate (u.name & pwd etc.), password has too be typed twice, done with JS -->
         <form action="" method="post">
             <input type="text" name="username" id="username" placeholder="Brukernavn"><br>
             <input type="text" name="name" id="name" placeholder="Fornavn"><br>
@@ -74,7 +79,7 @@
         <p><?php echo($message);?></p>
 
     </main>
-    <!-- Extra script, becouse page needs extra functionality -->
-    <script src="../js/script.js"></script>
+    <!-- Extra script, for password validation++ -->
+    <script src="../js/lagBrukerScript.js"></script>
 </body>
 </html>
