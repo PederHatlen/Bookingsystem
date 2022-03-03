@@ -92,6 +92,23 @@
             }else{
                 $message = "Fra er etter til.";
             }
+        }else if($_POST["form"] == 'remove' && isset($_POST["booking_id"])){
+
+            // Finding out if the booking exists and is made by the signed inn user
+            $stmt = $con->prepare('SELECT * FROM booking where user_id = ? and booking_id = ?');
+            $stmt->bind_param('ii', $_SESSION["user_id"], $_POST["booking_id"]); // 's' specifies the variable type => 'string'       (<- I didn't write this btw -Peder)
+            $stmt->execute();
+            $bookingsFound = $stmt->get_result()->num_rows;
+
+            // if found, delete it
+            if($bookingsFound == 1){
+                $stmt = $con->prepare('DELETE FROM booking where user_id = ? and booking_id = ?');
+                $stmt->bind_param('ii', $_SESSION["user_id"], $_POST["booking_id"]); // 's' specifies the variable type => 'string'       (<- I didn't write this btw -Peder)
+                $stmt->execute();
+                $message = "Bookingen ble slettet.";
+            }else{
+                $message = "Du har bare lov å slette dine egne bookinger.";
+            }
         }else{
             $message = "Ikke nok felter ble sendt med.";
         }
@@ -105,8 +122,7 @@
     if (isset($_GET["date"])){
         $search_from = strtotime($_GET["date"]);
         $search_to = strtotime('+1 day', $search_from);
-
-    }else{  
+    }else{
         $search_from = strtotime('today midnight');
         $search_to = strtotime('tomorrow midnight');
     }
@@ -114,6 +130,7 @@
     // Formating as mysql readable
     $searchDate_from = date('Y-m-d H:i:s', $search_from);
     $searchDate_to = date('Y-m-d H:i:s', $search_to);
+
 
     // Get all the rooms available for booking, and put them in ann array for safekeeping
     $stmt = $con->prepare('SELECT * FROM room');
@@ -147,6 +164,9 @@
 <body>
     <header>
         <h1>Booking</h1>
+        <?php
+            echo "<p>".date("j. M, Y", $search_from)."</p>";
+        ?>
     </header>
     <main>
         <button id="newBookingBtn" onclick="newBookingClick();">Ny booking</button>
@@ -217,10 +237,13 @@
             ?></g>
 
         </svg>
-        <form action="" method="get">
-            <input type="date" name="date" id="date">
-            <input type="submit" value="Se en annen dag">
-        </form>
+        <div id="displayTimeChange">
+            <button id="minus1Day" onclick="dateBtn(false);"><</button>
+            <form action="" method="get">
+                <input type="date" name="date" id="date" onInput="this.form.submit();">
+            </form>
+            <button id="plus1Day" onclick="dateBtn(true);">></button>
+        </div>
         <div id="bookingInfo">
             <?php
                 for ($i=0; $i < count($bookingsArr); $i++) {
@@ -229,11 +252,16 @@
                     date("H:i:s" ,strtotime($bookingsArr[$i]["time_from"])).
                     ', og til '.
                     date("H:i:s" ,strtotime($bookingsArr[$i]["time_to"])).
-                    '. Rommet er bokket av '.
+                    '. Rommet er booket av '.
                     ($bookingsArr[$i]["name"]." ".$bookingsArr[$i]["surname"]." (@".$bookingsArr[$i]["username"].")").
                     '</p>';
                     if ($bookingsArr[$i]["username"] == $_SESSION["username"]){
                         echo '<button class="editBtn" id="editBtn'.$bookingsArr[$i]["booking_id"].'" data-booking="'.$bookingsArr[$i]["booking_id"].'" data-room="'.$bookingsArr[$i]["room_id"].'">Rediger</button>';
+                        echo '<form action="" method="post" name="removeBooking'.$bookingsArr[$i]["booking_id"].'" id="removeBooking'.$bookingsArr[$i]["booking_id"].'">
+                            <input type="hidden" name="form" value="remove">
+                            <input type="hidden" name="booking_id" value="'.$bookingsArr[$i]["booking_id"].'">
+                            <input type="submit" class="fjernBookingSubmitt" value="Fjern booking">
+                        </form>';
                     }
                     echo "</div>";
                 }
@@ -260,9 +288,7 @@
 
                     <label for="to">Til:</label><br>
                     <input type="datetime-local" name="to" id="editTo"><br>
-                    <div>
-                        <input type="submit" value="Send endring">
-                    </div>
+                    <div><input type="submit" value="Send endring"></div>
                 </form>
             </div>
         </div>
@@ -277,7 +303,7 @@
         let bookingsInfoElArr = document.getElementsByClassName("bookingInfo");
 
         let editContainerEl = document.getElementById("editContainer");
-        let editBtnElArr = document.getElementsByClassName("bookingInfo");
+        let editBtnElArr = document.getElementsByClassName("editBtn");
         let editBookingIdEl = document.getElementById("editBookingId");
 
         let newBookingContainerEl = document.getElementById("newBookingContainer");
@@ -286,7 +312,6 @@
 
         for (let i = 0; i < bookingsElArr.length; i++) {
             bookingsElArr[i].onclick = function (e){
-                console.log(e.target.id + " | " + e.target);
                 for (let j = 0; j < bookingsElArr.length; j++) {
                     bookingsElArr[j].style.stroke = "";
                     bookingsInfoElArr[j].style.display = "none";
@@ -300,7 +325,6 @@
                 editBookingIdEl.value = parseInt(e.target.getAttribute("data-booking"));
                 editRoomSelectEL.value = parseInt(e.target.getAttribute("data-room"));
                 editContainerEl.style.display = "flex";
-                console.log("Edit: " + editBookingIdEl.value  + ", " + editRoomSelectEL.value);
             }
         }
         function closeEdit(){
@@ -315,19 +339,24 @@
         function selectChange(){
             roomValueEL.value = roomSelectEL.value;
             editRoomValueEL.value = editRoomSelectEL.value;
-            console.log("Changed: " + roomValueEL.value + ", " + editRoomValueEL.value);
         }
         editFormEl.onsubmit = selectChange;
         selectChange();
 
         window.onclick = function(e){
-            console.log(e.target);
-            if (e.target.nodeName == "MAIN" || e.target.nodeName == "HTML" || e.target.nodeName == "BODY"){
+            if (e.target.nodeName == "MAIN" || e.target.nodeName == "HEADER" || e.target.nodeName == "HTML" || e.target.nodeName == "BODY"){
                 for (let i = 0; i < bookingsElArr.length; i++) {
                     bookingsElArr[i].style.stroke = "";
                     bookingsInfoElArr[i].style.display = "none";
                 }
             }
+        }
+
+        function dateBtn(forward){
+            let path = location.href.split("?");
+            let currentTimestamp = new Date(<?php echo '"'.date("Y-m-d", $search_from).'"';?>);
+            currentTimestamp.setDate(currentTimestamp.getDate() + (forward? 1:-1));
+            location.href = path[0] + "?date=" + currentTimestamp.toISOString().split('T')[0];
         }
     </script>
 </body>
