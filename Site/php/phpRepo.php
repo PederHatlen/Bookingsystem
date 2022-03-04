@@ -20,22 +20,20 @@
     
         return $con;
     }
-    function login($user_id, $username, $name, $surname){
+    function login($user_id, $username, $name){
         //Login is done with setting session variables, better to let php handle it
         $_SESSION["user_id"] = $user_id;
         $_SESSION["username"] = $username;
         $_SESSION["name"] = $name;
-        $_SESSION["surname"] = $surname;
     }
     function logoff(){
         //unsetting everything
         unset($_SESSION["user_id"]);
         unset($_SESSION["username"]);
         unset($_SESSION["name"]);
-        unset($_SESSION["surname"]);
     }
     function is_logedin($con){
-        if (isset($_SESSION["user_id"]) && isset($_SESSION["username"]) && isset($_SESSION["name"]) && isset($_SESSION["surname"])){
+        if (isset($_SESSION["user_id"]) && isset($_SESSION["username"]) && isset($_SESSION["name"])){
 
             $stmt = $con->prepare('SELECT * FROM users WHERE user_id = ? and username = ?');
             $stmt->bind_param('ss', $_SESSION["user_id"], $_SESSION["username"]); // 's' specifies the variable type => 'string'

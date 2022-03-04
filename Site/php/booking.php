@@ -248,13 +248,9 @@
             <?php
                 for ($i=0; $i < count($bookingsArr); $i++) {
                     echo '<div class="bookingInfo" id="'.$bookingsArr[$i]["booking_id"].'Info" ><p>'.
-                    'Booket fra '.
-                    date("H:i:s" ,strtotime($bookingsArr[$i]["time_from"])).
-                    ', og til '.
-                    date("H:i:s" ,strtotime($bookingsArr[$i]["time_to"])).
-                    '. Rommet er booket av '.
-                    ($bookingsArr[$i]["name"]." ".$bookingsArr[$i]["surname"]." (@".$bookingsArr[$i]["username"].")").
-                    '</p>';
+                    'Booket fra '.date("H:i:s" ,strtotime($bookingsArr[$i]["time_from"])).
+                    ', og til '.date("H:i:s" ,strtotime($bookingsArr[$i]["time_to"])).
+                    '. Rommet er booket av '.$bookingsArr[$i]["name"]." (@".$bookingsArr[$i]["username"].')</p>';
                     if ($bookingsArr[$i]["username"] == $_SESSION["username"]){
                         echo '<button class="editBtn" id="editBtn'.$bookingsArr[$i]["booking_id"].'" data-booking="'.$bookingsArr[$i]["booking_id"].'" data-room="'.$bookingsArr[$i]["room_id"].'">Rediger</button>';
                         echo '<form action="" method="post" name="removeBooking'.$bookingsArr[$i]["booking_id"].'" id="removeBooking'.$bookingsArr[$i]["booking_id"].'">

@@ -13,7 +13,6 @@ CREATE TABLE users (
     user_id INT not null PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) not null unique,
     name VARCHAR(255) not null,
-    surname VARCHAR(255) not null,
     password VARCHAR(255) not null,
     created_at DATETIME DEFAULT current_timestamp
 );

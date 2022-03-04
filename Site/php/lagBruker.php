@@ -10,7 +10,7 @@
 
     // if post data, retrieve it and make variables
     if ($_SERVER['REQUEST_METHOD'] == "POST") {
-        if (isset($_POST['username']) && isset($_POST['name']) && isset($_POST['surname']) && isset($_POST['password'])){
+        if (isset($_POST['username']) && isset($_POST['name']) && isset($_POST['password'])){
             $username = $_POST['username'];
             $name = $_POST['name'];
             $surname = $_POST['surname'];
@@ -31,14 +31,14 @@
                 $message = "Brukernavnet er allerede tatt :(";
             }else{
                 // Making a new user, W. username and hashed password, server SQL code does rest
-                $stmt = $con->prepare('INSERT into users (username, name, surname, password) VALUES (?, ?, ?, ?)');
-                $stmt->bind_param('ssss', $username, $name, $surname, $pwd); // 's' specifies the variable type => 'string'
+                $stmt = $con->prepare('INSERT into users (username, name, password) VALUES (?, ?, ?)');
+                $stmt->bind_param('sss', $username, $name, $pwd); // 's' specifies the variable type => 'string'
                 $stmt->execute();
                 // Retrieve the inserted id created with Auto increment in sql
                 $user_id = $stmt->insert_id;
 
                 // Login function found in phprepo
-                login($user_id, $username, $name, $surname);
+                login($user_id, $username, $name);
                 $con->close();
 
                 $message = 'Brukeren er registrert og inlogget.';
@@ -69,8 +69,7 @@
         <!-- Form for inputting userdate (u.name & pwd etc.), password has too be typed twice, done with JS -->
         <form action="" method="post">
             <input type="text" name="username" id="username" placeholder="Brukernavn"><br>
-            <input type="text" name="name" id="name" placeholder="Fornavn"><br>
-            <input type="text" name="surname" id="surname" placeholder="Etternavn"><br>
+            <input type="text" name="name" id="name" placeholder="Fult navn"><br>
             <input type="password" name="password" id="password" placeholder="Passord"><br>
             <input type="password" name="passwordControll" id="passwordControll" placeholder="Gjenta passord"><br>
             <input type="submit" value="Lag bruker" id="submit" class="submitwmargin"><br>
