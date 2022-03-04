@@ -7,6 +7,61 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+
+/* PEDER SIN SEKSJON */
+html, body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+html{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+body{
+    /* Code for centered/reduced width page */
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+header, main{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+header{
+    padding: 20px;
+}
+
+#dateDisplay{
+    font-size: 1.2rem;
+}
+#Username{
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 20px;
+}
+
+main{
+    height: 100%;
+    padding: 0 20px;
+}
+
+h1, header p{margin: 0;}
+h2{margin: 0 0 1rem 0;}
+p{width: fit-content;}
+a{
+    text-decoration: underline;
+    color: white;
+    font-style: italic;
+    font-weight: bold;
+}
+a:hover{opacity: 70%;}
+
 button, input[type="submit"]{
     border: white 2px solid;
     font-size: 0.9rem;
@@ -18,59 +73,6 @@ button:hover, input[type="submit"]:hover{
     /* background-color: #ffffff88; */
 }
 
-
-
-/* PEDER SIN SEKSJON */
-
-h1, header p{
-    margin: 0;
-}
-h2{
-    margin: 0 0 1rem 0;
-}
-
-html, body{
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-}
-header{
-    padding: 20px;
-}
-header, main{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-main{
-    height: 100%;
-    padding: 0 20px;
-}
-a{
-    text-decoration: underline;
-    color: white;
-    font-style: italic;
-    font-weight: bold;
-}
-a:hover{
-    opacity: 70%;
-}
-html{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: black;
-}
-body{
-    width: 75%;
-    margin-left: auto;
-    margin-right: auto;
-}
-p{
-    width: fit-content;
-}
-
 #displayTimeChange{
     display: flex;
     justify-content: center;
@@ -80,9 +82,7 @@ p{
     margin: 5px;
 }
 
-.bookingInfo{
-    display: none;
-}
+.bookingInfo{display: none;}
 .floatingForm{
     position: absolute;
     top: 0;
@@ -105,19 +105,26 @@ p{
 .floatingFormContent div{
     padding-top: 1rem;
 }
-.closeBtn{color: Red;}
+.closeBtn{color: #ff3333;}
 
 input[type="submit"].fjernBookingSubmitt{
-    background-color: rgb(255, 50, 50);
+    background-color: #ff3333;
 }
 input[type="submit"].fjernBookingSubmitt:hover{
-    background-color: red;
+    background-color: #ff3333;
 }
 
 #row_explainations{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+.ErrorMSG{
+    color: #ff3333;
+}
+.SuccessMSG{
+    color: #33ff33
 }
 
 @media (orientation: portrait) {

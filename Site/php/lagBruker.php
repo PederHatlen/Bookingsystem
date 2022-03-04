@@ -6,7 +6,8 @@
     // Main PHP bulk, it is before the document because redirecting does not work otherwise
     define("IS_INCLUDED", TRUE);
     include 'phpRepo.php';
-    $message = "";
+    $message = "<br>";
+    $isError = TRUE;
 
     // if post data, retrieve it and make variables
     if ($_SERVER['REQUEST_METHOD'] == "POST") {
@@ -27,9 +28,7 @@
             $result = $stmt->get_result();
             
             // If user allready exists/output from query is not null
-            if (mysqli_num_rows($result) != null) {
-                $message = "Brukernavnet er allerede tatt :(";
-            }else{
+            if (mysqli_num_rows($result) == null) {
                 // Making a new user, W. username and hashed password, server SQL code does rest
                 $stmt = $con->prepare('INSERT into users (username, name, password) VALUES (?, ?, ?)');
                 $stmt->bind_param('sss', $username, $name, $pwd); // 's' specifies the variable type => 'string'
@@ -42,7 +41,10 @@
                 $con->close();
 
                 $message = 'Brukeren er registrert og inlogget.';
+                $isError = FALSE;
                 header('Location: booking.php');
+            }else{
+                $message = "Brukernavnet er allerede tatt :(";
             }
         }else{
             $message = 'Det ble ikke sendt med nokk detaljer.';
@@ -75,7 +77,7 @@
             <input type="submit" value="Lag bruker" id="submit" class="submitwmargin"><br>
         </form>
 
-        <p><?php echo($message);?></p>
+        <p><?php echo('<p class="'.($isError? 'ErrorMSG':'SuccessMSG').'">'.$message.'</p>');?></p>
 
     </main>
     <!-- Extra script, for password validation++ -->

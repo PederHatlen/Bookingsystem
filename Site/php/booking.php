@@ -10,7 +10,8 @@
     }
 
     // Declaring output message (Handy for debugging/info)
-    $message = "";
+    $message = "<br>";
+    $isError = TRUE;
 
     // The magic is in the post
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -72,6 +73,7 @@
                                 $stmt->bind_param('iisss', $room, $_SESSION["user_id"], $color, $fromFormat, $toFormat); // The funky letters are for type specification
                                 $stmt->execute();
                                 $message = "Bookingen ble laget.";
+                                $isError = FALSE;
                                 break;
                             case 'edit':
                                 // You get the point
@@ -79,6 +81,7 @@
                                 $stmt->bind_param('issi', $room, $fromFormat, $toFormat, $bookingId);
                                 $stmt->execute();
                                 $message = "Bookingen ble redigert.";
+                                $isError = FALSE;
                                 break;
                         }
                         
@@ -90,7 +93,11 @@
                     $message = "Den tiden er opptatt.";
                 }
             }else{
-                $message = "Fra er etter til.";
+                if($from == $to){
+                    $message = "Velg forskjellige tidspunkt.";
+                }else{
+                    $message = "Fra er etter til.";
+                }
             }
         }else if($_POST["form"] == 'remove' && isset($_POST["booking_id"])){
 
@@ -106,6 +113,7 @@
                 $stmt->bind_param('ii', $_SESSION["user_id"], $_POST["booking_id"]); // 's' specifies the variable type => 'string'       (<- I didn't write this btw -Peder)
                 $stmt->execute();
                 $message = "Bookingen ble slettet.";
+                $isError = FALSE;
             }else{
                 $message = "Du har bare lov å slette dine egne bookinger.";
             }
@@ -165,11 +173,23 @@
     <header>
         <h1>Booking</h1>
         <?php
-            echo "<p>".date("j. M, Y", $search_from)."</p>";
+            $fmt = datefmt_create(
+                'nb_NO',
+                IntlDateFormatter::FULL,
+                IntlDateFormatter::FULL,
+                'Europe/Oslo',
+                IntlDateFormatter::GREGORIAN,
+                'EEE d. MMM yyyy'
+            );
+            echo "<p id='dateDisplay'>".ucwords(datefmt_format($fmt, $search_from))."</p>";
+            // echo "<p>".date("D, j. M, Y", $search_from)."</p>";
+            echo '<span id="Username">@'.$_SESSION["username"].'</span>'
         ?>
+        
     </header>
     <main>
         <button id="newBookingBtn" onclick="newBookingClick();">Ny booking</button>
+        <?php echo '<p class="'.($isError? 'ErrorMSG':'SuccessMSG').'">'.$message."</p>";?>
         <div id="newBookingContainer" class="floatingForm">
             <div class="floatingFormContent">
                 <h2>Ny booking <a href="#" class="closeBtn" onclick="newBookingClick();">X</a></h2>
@@ -193,7 +213,6 @@
                 </form>
             </div>
         </div>
-        <?php echo "<p>".$message."</p>";?>
         <svg width="100%" height=<?php echo '"'.((mysqli_num_rows($rooms)*100)+$bookingMarginY+1).'"'?> xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <style>
