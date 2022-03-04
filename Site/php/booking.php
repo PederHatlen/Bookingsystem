@@ -185,13 +185,11 @@
                     </select><br>
                     <input type="hidden" name="room" id="roomValue" value="1">
                     <label for="from">Jeg vil booke fra:</label><br>
-                    <input type="datetime-local" name="from" id="from"><br>
+                    <input type="datetime-local" name="from" id="from" value=<?php echo '"'.date("Y-m-d", $search_from).'T00:00"';?>><br>
 
                     <label for="to">Jeg vil booke til:</label><br>
-                    <input type="datetime-local" name="to" id="to"><br>
-                    <div>
-                        <input type="submit" value="Send bookingen">
-                    </div>
+                    <input type="datetime-local" name="to" id="to" value=<?php echo '"'.date("Y-m-d", $search_from).'T00:00"';?>><br>
+                    <div><input type="submit" value="Send bookingen"></div>
                 </form>
             </div>
         </div>
