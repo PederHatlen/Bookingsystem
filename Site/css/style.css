@@ -14,7 +14,8 @@ button, input[type="submit"]{
 }
 
 button:hover, input[type="submit"]:hover{
-    background-color: #ffffff88;
+    opacity: 70%;
+    /* background-color: #ffffff88; */
 }
 
 
@@ -23,6 +24,9 @@ button:hover, input[type="submit"]:hover{
 
 h1, header p{
     margin: 0;
+}
+h2{
+    margin: 0 0 1rem 0;
 }
 
 html, body{

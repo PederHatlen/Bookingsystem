@@ -29,7 +29,10 @@
     }
     function logoff(){
         //unsetting everything
-        unset($_SESSION);
+        unset($_SESSION["user_id"]);
+        unset($_SESSION["username"]);
+        unset($_SESSION["name"]);
+        unset($_SESSION["surname"]);
     }
     function is_logedin($con){
         if (isset($_SESSION["user_id"]) && isset($_SESSION["username"]) && isset($_SESSION["name"]) && isset($_SESSION["surname"])){
